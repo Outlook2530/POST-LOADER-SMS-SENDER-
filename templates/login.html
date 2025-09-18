@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXSHU ADMIN LOGIN</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+        
+        :root {
+            --neon-blue: #00ffff;
+            --neon-pink: #ff00ff;
+            --neon-yellow: #ffcc00;
+            --neon-green: #00ff66;
+            --dark-bg: #121212;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark-bg);
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, 
+                rgba(0, 255, 255, 0.1), 
+                rgba(255, 0, 255, 0.1), 
+                rgba(255, 204, 0, 0.1));
+            z-index: -1;
+            animation: backgroundShift 15s infinite alternate;
+        }
+        
+        @keyframes backgroundShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .login-container {
+            width: 90%;
+            max-width: 450px;
+            padding: 40px 30px;
+            background-color: rgba(18, 18, 18, 0.8);
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6), 
+                        0 0 60px rgba(0, 255, 255, 0.3);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(0, 255, 255, 0.1),
+                rgba(255, 0, 255, 0.1),
+                transparent
+            );
+            animation: rotate 6s infinite linear;
+            z-index: -1;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .logo {
+            margin-bottom: 25px;
+        }
+        
+        .logo h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue), 
+                         0 0 20px var(--neon-blue), 
+                         0 0 30px var(--neon-blue);
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+        
+        .logo p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--neon-blue);
+            text-shadow: 0 0 5px var(--neon-blue);
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--neon-blue);
+            background-color: rgba(26, 26, 26, 0.8);
+            color: var(--neon-blue);
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+        }
+        
+        .input-group input:focus {
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            background-color: var(--neon-blue);
+            color: #0a0a0a;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-btn:hover {
+            background-color: #00e0e0;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.9), 
+                        0 0 40px rgba(0, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+        
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { left: -50%; }
+            100% { left: 150%; }
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--neon-blue);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px var(--neon-blue);
+        }
+        
+        .back-link:hover {
+            color: var(--neon-pink);
+            text-shadow: 0 0 5px var(--neon-pink);
+        }
+        
+        .footer {
+            margin-top: 30px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .footer a {
+            color: var(--neon-blue);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .footer a:hover {
+            color: var(--neon-pink);
+            text-shadow: 0 0 5px var(--neon-pink);
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 15px rgba(0, 255, 255, 0.7); }
+            50% { box-shadow: 0 0 25px rgba(0, 255, 255, 0.9), 0 0 40px rgba(0, 255, 255, 0.6); }
+            100% { box-shadow: 0 0 15px rgba(0, 255, 255, 0.7); }
+        }
+        
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+            
+            .logo h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>AXSHU PANEL</h1>
+            <p>Secure Admin Authentication</p>
+        </div>
+        
+        <form method="POST">
+            <div class="input-group">
+                <label for="password"><i class="fas fa-key"></i> ADMIN PASSWORD</label>
+                <input type="password" id="password" name="password" placeholder="Enter your secret key" required autocomplete="off">
+            </div>
+            
+            <button type="submit" class="login-btn pulse">
+                <i class="fas fa-lock-open"></i> UNLOCK DASHBOARD
+            </button>
+        </form>
+        
+        <a href="/" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+        
+        <div class="footer">
+            <p>© 2024 D3V3L0P3D WITH ❤️ BY <a href="https://www.facebook.com/profile.php?id=61574791744025" target="_blank">AXSHU RAJPUT</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Add visual feedback for password input
+        const passwordInput = document.getElementById('password');
+        
+        passwordInput.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.02)';
+            this.parentElement.style.transition = 'transform 0.3s ease';
+        });
+        
+        passwordInput.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+        
+        // Add particle effect on click (optional)
+        document.querySelector('.login-btn').addEventListener('click', function() {
+            this.classList.remove('pulse');
+            void this.offsetWidth; // Trigger reflow
+            this.classList.add('pulse');
+        });
+    </script>
+</body>
+</html>
