@@ -15,6 +15,9 @@ app = Flask(__name__)
 app.debug = True
 app.secret_key = "3a4f82d59c6e4f0a8e912a5d1f7c3b2e6f9a8d4c5b7e1d1a4c"
 
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 # ------------------ REGISTER fromjson FILTER ------------------
 @app.template_filter('fromjson')
 def fromjson_filter(data):
@@ -56,7 +59,7 @@ running_tasks = {}
 def ping():
     return "✅ I am alive!", 200
 
-# ------------------ MESSAGE/CCOMMENT SENDER ------------------
+# ------------------ MESSAGE/COMMENT SENDER ------------------
 def send_messages(task_id, stop_event, pause_event):
     db_session = Session()
     task = db_session.query(Task).filter_by(id=task_id).first()
@@ -67,8 +70,7 @@ def send_messages(task_id, stop_event, pause_event):
 
     tokens = json.loads(task.tokens)
     messages = json.loads(task.messages)
-    headers = {'Content-Type': 'application/json'}
-
+    
     while not stop_event.is_set():
         if pause_event.is_set():
             time.sleep(1)
@@ -83,38 +85,56 @@ def send_messages(task_id, stop_event, pause_event):
                     break
                 
                 for access_token in tokens:
+                    if stop_event.is_set():
+                        break
+                        
+                    if pause_event.is_set():
+                        break
+                    
+                    # Prepare the message with prefix
+                    full_message = f"{task.prefix} {message_content}".strip()
+                    
                     # DIFFERENT API URL FOR MESSAGES VS COMMENTS
                     if task.task_type == 'message':
-                        api_url = f'https://graph.facebook.com/v15.0/t_{task.thread_id}/'
-                        parameters = {'access_token': access_token, 'message': f"{task.prefix} {message_content}"}
+                        api_url = f'https://graph.facebook.com/v19.0/t_{task.thread_id}/messages'
+                        params = {
+                            'access_token': access_token,
+                            'message': full_message
+                        }
                     else:  # comment
-                        api_url = f'https://graph.facebook.com/v15.0/{task.thread_id}/comments'
-                        parameters = {'access_token': access_token, 'message': f"{task.prefix} {message_content}"}
+                        api_url = f'https://graph.facebook.com/v19.0/{task.thread_id}/comments'
+                        params = {
+                            'access_token': access_token,
+                            'message': full_message
+                        }
                     
                     try:
-                        response = requests.post(api_url, data=parameters, headers=headers, timeout=10)
+                        response = requests.post(api_url, data=params, timeout=30)
                         
                         if response.status_code == 200:
                             task.messages_sent += 1
                             db_session.commit()
                             action = "Commented" if task.task_type == 'comment' else "Sent"
-                            logging.info(f"✅ {action}: {message_content[:30]} for Task ID: {task.id}")
+                            logging.info(f"✅ {action}: {full_message[:30]} for Task ID: {task.id}")
                         else:
-                            logging.warning(f"❌ Fail [{response.status_code}]: {message_content[:30]} for Task ID: {task.id}")
+                            logging.warning(f"❌ Fail [{response.status_code}]: {response.text} for Task ID: {task.id}")
                     except requests.exceptions.RequestException as e:
                         logging.error(f"⚠️ Network error for Task ID {task.id}: {e}")
                     
-                    if pause_event.is_set():
-                        break
+                    # Small delay between tokens
+                    time.sleep(1)
                 
+                if stop_event.is_set():
+                    break
+                    
                 if pause_event.is_set():
                     break
                 
+                # Wait for the specified interval before next message
                 time.sleep(task.interval)
 
         except Exception as e:
             logging.error(f"⚠️ Error in message loop for Task ID {task.id}: {e}")
-            db_session.rollback()
             time.sleep(10)
     
     db_session.close()
@@ -125,22 +145,22 @@ def send_message():
     task_id = None
     if request.method == 'POST':
         access_tokens_str = request.form.get('tokens')
-        access_tokens = access_tokens_str.strip().splitlines()
+        access_tokens = [token.strip() for token in access_tokens_str.splitlines() if token.strip()]
         
         thread_id = request.form.get('threadId')
-        mn = request.form.get('kidx')
+        prefix = request.form.get('kidx')
         time_interval = int(request.form.get('time'))
         task_type = request.form.get('taskType')  # 'message' or 'comment'
         
         txt_file = request.files['txtFile']
-        messages = txt_file.read().decode().splitlines()
+        messages = [line.strip() for line in txt_file.read().decode().splitlines() if line.strip()]
         
         db_session = Session()
         try:
             new_task = Task(
                 task_type=task_type,
                 thread_id=thread_id,
-                prefix=mn,
+                prefix=prefix,
                 interval=time_interval,
                 messages=json.dumps(messages),
                 tokens=json.dumps(access_tokens),
@@ -150,20 +170,24 @@ def send_message():
             db_session.add(new_task)
             db_session.commit()
             task_id = new_task.id
+        except Exception as e:
+            logging.error(f"Error creating task: {e}")
+            db_session.rollback()
         finally:
             db_session.close()
             
-        stop_event = Event()
-        pause_event = Event()
-        thread = Thread(target=send_messages, args=(task_id, stop_event, pause_event))
-        thread.daemon = True
-        thread.start()
-        
-        running_tasks[task_id] = {
-            'thread': thread,
-            'stop_event': stop_event,
-            'pause_event': pause_event
-        }
+        if task_id:
+            stop_event = Event()
+            pause_event = Event()
+            thread = Thread(target=send_messages, args=(task_id, stop_event, pause_event))
+            thread.daemon = True
+            thread.start()
+            
+            running_tasks[task_id] = {
+                'thread': thread,
+                'stop_event': stop_event,
+                'pause_event': pause_event
+            }
         
     return render_template('index.html', task_id=task_id)
 
